@@ -1,0 +1,16 @@
+<body onload='onload()'>  <!-- wspage.html -->
+Minimal Jsi websocket page: <input id="myinput" size=30></input>
+<script>
+function onload() {
+    var cnt = 0, s, r, ws = new WebSocket(document.URL.replace(/^http/,'ws'), 'ws');
+    ws.onopen = function() { ws.send('{"cmd":"init"}'); };
+    ws.onmessage = function(msg) {
+        document.getElementById('myinput').value = cnt+': '+msg.data;
+        s = JSON.parse(msg.data);
+        if (s.cmd == "exit") return ws.close();
+        r = { resp:s.cmd, cmd:(cnt++ >= 10 ? 'exit' : 'process') };
+        setTimeout(function() {ws.send(JSON.stringify(r)); }, 1000);
+    };
+}
+</script>
+</body>

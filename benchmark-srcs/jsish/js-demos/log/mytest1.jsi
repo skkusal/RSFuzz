@@ -1,0 +1,21 @@
+#!/usr/bin/env jsish
+
+function mytest1(args:array=void, conf:object=void) {
+    var self = {
+        count: 0
+    };
+    const options = { // Here is my test.
+        Debug       :false,     // LogDebug output.
+        label       :''         // Some other argument.
+    };
+    
+    moduleOpts(options, self, conf);
+    for (var msg of args) {
+        self.count++;
+        LogDebug("testing:", msg);
+    }
+    puts("Done");
+    return self;
+}
+
+module(mytest1);

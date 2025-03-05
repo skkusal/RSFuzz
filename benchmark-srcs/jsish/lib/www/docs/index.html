@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="application-name" content="jsi index.html">
+    <link rel='shortcut icon' href='../favicon.ico' type='image/x-icon' />
+    <link rel="stylesheet" href="../css/bootstrap.css">
+    <link rel="stylesheet" href="../css/bootstrap-vue.css">
+    <link rel="stylesheet" href="../css/animate.css">
+    <link rel="stylesheet" href="../css/prism.css">
+    <link rel="stylesheet" href="../css/VuePrismEditor.css">
+    <script src="../js/vue.js"></script>
+    <script src="../js/vuex.js"></script>
+    <script src="../js/vue-router.min.js"></script>
+    <script src="../js/bootstrap-vue.min.js"></script>
+    <script src="../js/vue-markdown-pdq.min.js"></script>
+    <script src="../js/prism.js"></script>
+    <script src="../js/VuePrismEditor.umd.min.js"></script>
+    <script src="../js/Sortable.min.js"></script>
+    <script src="../js/vuedraggable.umd.min.js"></script>
+    <script src="../js/Jsish.js"></script>
+    <script>
+        Jsish.conf({jsiroot:'../', approot:'./'});
+        Vue.config.productionTip=false;
+        //Vue.config.devtools=false;
+        //if (location.port != 433)
+        Vue.config.errorHandler = 
+        window.onerror = function(msg, src, ln, col, err) {  console.warn("ERR: ",msg); document.getElementById('apperr').innerText = msg+': @'+src+' : '+ln; };
+    </script>
+</head>
+
+<body>
+    <div id="apperr" style="background:pink"></div>
+    <noscript id="nojs">
+        <a href="https://github.com/pcmacdon/jsish" rel="noopener noreferrer nofollow">
+            <img src="https://github.com/pcmacdon/jsish/logojsi.png" alt="Jsi"> apps</a> require javascript
+    </noscript>
+    <div id="app" style="height:100%; width:100%">
+        <app-view />
+    </div>
+</body>
+<script src="./App.js"></script>
+
+</html>
+

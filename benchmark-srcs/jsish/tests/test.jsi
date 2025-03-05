@@ -1,0 +1,12 @@
+// FILE: test.jsi
+function test(n) { return "TEST: "+n; }
+;test('this is a test');
+;test('this to');
+test('but not this');
+
+/*
+=!EXPECTSTART!=
+test('this is a test') ==> TEST: this is a test
+test('this to') ==> TEST: this to
+=!EXPECTEND!=
+*/
