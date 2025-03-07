@@ -1,1 +1,4 @@
 benchmark/
+*__pycache__/
+test*.sh
+*_results/
