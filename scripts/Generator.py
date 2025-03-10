@@ -350,7 +350,7 @@ def parse_bnf(bnf_file, suffix, bnf_dir):
             prob_list.append(float(i[2:]))
 
         try:
-            with open("../bnf/js_base.pickle", "rb") as f:
+            with open("./bnf/js_base.pickle", "rb") as f:
                 js_dict = pickle.load(f)
         except:
             print("js base missing")

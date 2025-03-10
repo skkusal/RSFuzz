@@ -106,19 +106,19 @@ if __name__ == "__main__":
         exit(1)
 
     options.result_dir = os.path.abspath(f"{options.result_dir}/{options.benchmark}_{options.base_fuzzer}")
-
+    
     if options.benchmark == "QuickJS":
-        options.test_pgm = f"{benchmark_dir}/quickjs/qjs"
-        options.test_dir = f"{benchmark_dir}/quickjs"
+        options.test_pgm = f"{benchmark_dir}/{options.base_fuzzer}/quickjs/qjs"
+        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/quickjs"
     elif options.benchmark == "JerryScript":
-        options.test_pgm = f"{benchmark_dir}/jerryscript/build/bin/jerry"
-        options.test_dir = f"{benchmark_dir}/jerryscript/build"
+        options.test_pgm = f"{benchmark_dir}/{options.base_fuzzer}/jerryscript/build/bin/jerry"
+        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/jerryscript/build"
     elif options.benchmark == "Jsish":
-        options.test_pgm = f"{benchmark_dir}/jsish/jsish"
-        options.test_dir = f"{benchmark_dir}/jsish"
+        options.test_pgm = f"{benchmark_dir}/{options.base_fuzzer}/jsish/jsish"
+        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/jsish"
     else:
         options.test_pgm = "java"
-        options.test_dir = f"{benchmark_dir}/{options.benchmark}-analyser.jar"
+        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/{options.benchmark}-analyser.jar"
     
     print("target program :", options.test_pgm)
     print("Dir of target program :", options.test_dir)

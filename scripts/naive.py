@@ -116,6 +116,40 @@ def dt_to_sequences(dt_name):
     
     return tuple(sorted(refined_seqs, key=lambda x:len(x)))
 
+def naive_simplify(dt, node_cnt):
+    sequences = []
+    queue = [[0, 0, []]]
+    while queue:
+        cur_i, cur_j, cur_seq = queue.pop()
+        cur_symbol, cur_children, cur_dn, cur_pi = dt[cur_i][cur_j]
+        now_depth = cur_pi[0] + 1
+        if now_depth == 0:
+            node_info = (cur_symbol, cur_pi[0]+1, cur_dn, None)
+        else:
+            node_info = (cur_symbol, cur_pi[0]+1, cur_dn, dt[cur_pi[0]][cur_pi[1]][0])
+        
+        if node_info not in node_cnt:
+            parent_dn = dt[cur_pi[0]][cur_pi[1]][2]
+            
+            sequences.append(tuple(cur_seq[:-1]+[parent_dn]))
+            continue
+        
+        if cur_dn == -2:
+            continue
+        if cur_dn == -1 or cur_symbol in symbol_with_terminal_children_only:
+            tmp_idx = len(cur_seq)
+
+            while cur_seq[tmp_idx-1] in one_child_symbols:
+                tmp_idx -= 1
+                cur_pi = dt[cur_pi[0]][cur_pi[1]][3]
+            parent_dn = dt[cur_pi[0]][cur_pi[1]][2]
+            sequences.append(tuple(cur_seq[:tmp_idx]+[parent_dn]))
+        else:
+            for cidx in cur_children:
+                queue.append([cur_i + 1, cidx, cur_seq+[cur_symbol]])
+
+    return sequences
+
 def create_csv(best_generation, subject, total_clusters, unique_dt, unique_seqs, n_iter, n_lines, info_num):
     input_files_directory = "run-" + str(best_generation).zfill(5) + "/samples"
     csv_files_directory = "run-" + str(best_generation).zfill(5) + "/csv"
@@ -273,6 +307,142 @@ def create_csv(best_generation, subject, total_clusters, unique_dt, unique_seqs,
     
     return updated_covs
 
+def naive_create_csv(best_generation, subject, total_clusters, unique_dt, unique_seqs, n_iter, n_lines, info_num):
+    input_files_directory = "run-" + str(best_generation).zfill(5) + "/samples"
+    csv_files_directory = "run-" + str(best_generation).zfill(5) + "/csv"
+
+    input_files = os.path.join(baseDirectory, input_files_directory)
+    csv_files = os.path.join(baseDirectory, csv_files_directory)
+    if not os.path.isdir(csv_files):
+        os.mkdir(csv_files, 0o755)
+
+    error_code_file = os.path.join(baseDirectory, "run-" + str(best_generation).zfill(5), "error_code.txt")
+    error_code_file = os.path.abspath(error_code_file)
+    
+    updated_covs = set()
+        
+    if is_java:
+        for i in range(n_iter):
+            input_name = input_files + "/" + str(i).zfill(8) + "." + fileExtension
+            tree_name = input_files + "/" + str(i).zfill(8) + "_tree.pickle"
+            if not os.path.exists(input_name):
+                break
+            csv_name = csv_files + "/" + str(i).zfill(8) + ".csv"
+            dt_name = input_files + "/" + str(i).zfill(8) + "_tree.pickle"
+            tmp_dt_hash = compute_tree_hash(dt_name)
+            
+            if tmp_dt_hash in dt_idx_dict:
+                dt_key = dt_idx_dict[tmp_dt_hash]
+                cov_key = unique_dt[dt_key]
+
+            else:                        
+                dt_key = len(dt_idx_dict)
+                os.system(f"cp {dt_name} {list_dir}/unique_trees/{dt_key}.pickle")
+                dt_idx_dict[tmp_dt_hash] = dt_key
+                
+                if dt_key not in unique_dt:
+                    if not os.path.isfile(csv_name):
+                        subprocess.call(
+                            f"java -jar {test_dir} {str(subject)} file-coverage-l {input_name} {csv_name} 1>/dev/null 2>/dev/null",
+                            shell=True,
+                        )
+                    tmp_cov = csv_handler(csv_name)
+                    tmp_cov_hash = compute_coverage_hash(tmp_cov)
+                    if len(tmp_cov) == 0:
+                        os.system(f"cp {input_name} {list_dir}/error/{info_num}_{best_generation}_{i}.{fileExtension}")
+                        os.system(f"cp {tree_name} {list_dir}/error/{info_num}_{best_generation}_{i}_tree.pickle")
+                        tmp_cov = np.full(n_lines, False)
+                    
+                    if tmp_cov_hash not in cov_idx_dict:
+                        total_clusters[len(cov_idx_dict)] = {}
+                        with open(f"{list_dir}/unique_covs/{len(cov_idx_dict)}.pickle", 'wb') as f:
+                            pickle.dump(tmp_cov, f)
+                        cov_idx_dict[tmp_cov_hash] = len(cov_idx_dict)
+                        coverage_list.append(tmp_cov)
+                    
+                    cov_key = cov_idx_dict[tmp_cov_hash]
+                    unique_dt[dt_key] = cov_key
+                    total_clusters[cov_key][dt_key] = 0
+                else:
+                    cov_key = unique_dt[dt_key]
+
+            total_clusters[cov_key][dt_key] += 1
+            updated_covs.add(cov_key)
+
+        return updated_covs
+    
+    root_dir = os.getcwd()
+    input_files = os.path.abspath(input_files)
+    csv_files = os.path.abspath(csv_files)
+    os.chdir(test_dir)
+    
+    for i in range(n_iter):
+        os.system("find " + test_dir + ' -name "*.gcda" -exec rm {} \;')
+        input_name = input_files + "/" + str(i).zfill(8) + "." + fileExtension
+        tree_name = input_files + "/" + str(i).zfill(8) + "_tree.pickle"
+        if not os.path.exists(input_name):
+            break
+        info_name = csv_files + "/" + str(i).zfill(8) + ".info"
+        dt_name = input_files + "/" + str(i).zfill(8) + "_tree.pickle"
+        
+        tmp_dt_hash = compute_tree_hash(dt_name)
+        if tmp_dt_hash in dt_idx_dict:
+            dt_key = dt_idx_dict[tmp_dt_hash]
+            cov_key = unique_dt[dt_key]
+        else:
+            dt_key = len(dt_idx_dict)
+            os.system(f"cp {dt_name} {list_dir}/unique_trees/{dt_key}.pickle")
+            dt_idx_dict[tmp_dt_hash] = dt_key
+
+            if dt_key not in unique_dt:
+                try:
+                    error_code = subprocess.run(
+                        [test_pgm, input_name],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        timeout=1,
+                    ).returncode
+                except:
+                    error_code = -999
+                with open(error_code_file, "a") as f:
+                    f.write(str(i).zfill(8) + " : " + str(error_code) + "\n")
+
+                os.system("find " + test_dir + ' -name "*.gcda" -exec gcov -H {} 1>/dev/null \;')
+                os.system('find . -name "*.gcov" -exec cat {}>' + info_name +' \;')
+                os.system('find . -name "*.gcov" -exec rm {} 1>/dev/null 2>/dev/null \;')
+
+                    
+                tmp_cov = branch_handler(info_name)
+                
+                
+                if len(tmp_cov) == 0:
+                    os.system(f"cp {input_name} {list_dir}/error/{info_num}_{best_generation}_{i}.{fileExtension}")
+                    os.system(f"cp {tree_name} {list_dir}/error/{info_num}_{best_generation}_{i}_tree.pickle")
+                    tmp_cov = np.full(n_lines, False)
+                
+                tmp_cov_hash = compute_coverage_hash(tmp_cov)
+                 
+                if tmp_cov_hash not in cov_idx_dict:
+                    total_clusters[len(cov_idx_dict)] = {}
+                    with open(f"{list_dir}/unique_covs/{len(cov_idx_dict)}.pickle", 'wb') as f:
+                        pickle.dump(tmp_cov, f)
+                    cov_idx_dict[tmp_cov_hash] = len(cov_idx_dict)
+                    coverage_list.append(tmp_cov)
+                
+                cov_key = cov_idx_dict[tmp_cov_hash]
+                unique_dt[dt_key] = cov_key
+                total_clusters[cov_key][dt_key] = 0
+            else:                   
+                cov_key = unique_dt[dt_key]
+                
+        total_clusters[cov_key][dt_key] += 1
+        updated_covs.add(cov_key)
+        
+    os.chdir(root_dir)
+    
+    return updated_covs
+
+
 def test_input_files(input_set_list, subject, info_num, start_time, n_iter):
     if is_java:
         cov_vec = []
@@ -359,7 +529,6 @@ def test_input_files(input_set_list, subject, info_num, start_time, n_iter):
 
     result_info_file = os.path.join(list_dir, "coverage", str(info_num).zfill(5) + "_cov.info")
     result_cov_file = os.path.join(list_dir, "coverage", str(info_num).zfill(5) + "test_cov.pickle")
-    # os.system("lcov -c --directory " + test_dir + " --output-file " + result_info_file + " 1>/dev/null 2>/dev/null")
     root_dir = os.getcwd()
     result_info_file = os.path.abspath(result_info_file)
     result_cov_file = os.path.abspath(result_cov_file)
@@ -384,9 +553,9 @@ def test_input_files(input_set_list, subject, info_num, start_time, n_iter):
     return cov_vec
 
 
-##############################
-### Generate Pruning List. ###
-##############################
+####################################
+### Generate Redundant Sequences ###
+####################################
 def compare_subpaths(long_sp, short_sp):
     if long_sp == short_sp:
         return True
@@ -454,7 +623,7 @@ def naive_capture(seqs_list):
         if node_cnt[node_info] >= total_cnt:
             removed_node_cnt.add(node_info)
       
-    redundant_seqs = dt_to_sequences(seqs_list[0][0], removed_node_cnt)
+    redundant_seqs = naive_simplify(seqs_list[0][0], removed_node_cnt)
                 
     return redundant_seqs
  
@@ -589,34 +758,28 @@ def update_redundant_sequence(info_num, redundant_sequence, parameter_dict, upda
         new_redundant_sequence = copy.deepcopy(redundant_sequence)
         clusters_to_update = set(total_clusters.keys()) - captured_covs        
 
-    sequence_list_size_dict = {}
     for cov_key in clusters_to_update:
-        seqs_list = []
-        for seqs_key,cnt in total_clusters[cov_key].items():
-            with open(f"{list_dir}/unique_trees/{seqs_key}_seqs.pickle", 'rb') as f:
-                tmp_seqs = pickle.load(f)
-                seqs_list.append([set(tmp_seqs), cnt])
-
-        sequence_list_size_dict[cov_key] = (len(total_clusters[cov_key]), len(seqs_list))
-        if cov_key not in captured_covs:
-            captured_covs.add(cov_key)
-            parameter_dict[cov_key] = []
-            update_param = False
-        else:             
-            update_param = True
         if naive_version == "capture":
-            new_redundant_sequence[cov_key] = capture_rule_from_cluster(seqs_list, parameter_dict, cov_key, update_param)
+            seqs_list = []
+            for seqs_key,cnt in total_clusters[cov_key].items():
+                with open(f"{list_dir}/unique_trees/{seqs_key}_seqs.pickle", 'rb') as f:
+                    tmp_seqs = pickle.load(f)
+                    seqs_list.append([set(tmp_seqs), cnt])
+            new_redundant_sequence[cov_key] = capture_rule_from_cluster(seqs_list, parameter_dict, cov_key, False)
+
         else:
+            seqs_list = []
+            for dt_key,cnt in total_clusters[cov_key].items():
+                with open(f"{list_dir}/unique_trees/{dt_key}.pickle", 'rb') as f:
+                    tmp_seqs = pickle.load(f)
+                    seqs_list.append([tmp_seqs, cnt])
             tmp_rs = naive_capture(seqs_list)
             if len(tmp_rs) == 1 and len(tmp_rs[0]) == 1:
                 continue
-            new_redundant_sequence[cov_key] = [tmp_rs]            
-    
-    with open(f"{list_dir}/other_info/{info_num}_seqlist_size.pickle", 'wb') as f:
-        pickle.dump(sequence_list_size_dict, f)
+            new_redundant_sequence[cov_key] = [set(tmp_rs)]         
 
     logs = "--------------------------------------------------------------\n"
-    logs += f"Capture from top {len(clusters_to_update)} clusters over {len(result)} in {time.time()-start_time}\n"
+    logs += f"Capture in {time.time()-start_time}\n"
     with open(list_dir + "/logs.txt", "a") as f:
         f.write(logs)
            
@@ -687,8 +850,10 @@ def run(rule_dict, depths_dict, subject, number_individuals):
             updated_covs = set()    
                  
             for current_generation in range(10):
-                updated_covs |= create_csv(current_generation, subject, total_clusters, unique_dt, unique_seqs, n_iter, n_lines, info_num)
-                   
+                if naive_version == "capture":
+                    updated_covs |= create_csv(current_generation, subject, total_clusters, unique_dt, unique_seqs, n_iter, n_lines, info_num)
+                else:
+                    updated_covs |= naive_create_csv(current_generation, subject, total_clusters, unique_dt, unique_seqs, n_iter, n_lines, info_num)
             os.system(f"ps -ef | grep 'java -jar' | grep {test_dir}"+"| awk '{print $2}' | xargs kill -9 1>/dev/null 2>/dev/null")
             logs = f"Created CSV files in {time.time()-start_time}\n"
             with open(f"{list_dir}/dts_infos.pickle", 'wb') as f:

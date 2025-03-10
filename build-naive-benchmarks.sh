@@ -1,18 +1,18 @@
 #! /bin/bash
 
-rm -rf benchmark
-mkdir benchmark
-approaches="RSFuzz Baseline"
+rm -rf naive-benchmark
+mkdir naive-benchmark
+approaches="naive select capture"
 bases="random prob"
 
 for approach in $approaches
 do
-    mkdir benchmark/${approach}
+    mkdir naive-benchmark/${approach}
     for base in $bases
     do  
-        cp -r benchmark-srcs benchmark/${approach}/${base}
+        cp -r benchmark-srcs naive-benchmark/${approach}/${base}
         echo "Build ${approach} ${base} jerryscript"
-        cd benchmark/${approach}/${base}/jerryscript && python3 tools/build.py --compile-flag "-fprofile-abs-path -fprofile-arcs -ftest-coverage" 1>/dev/null 2>/dev/null
+        cd naive-benchmark/${approach}/${base}/jerryscript && python3 tools/build.py --compile-flag "-fprofile-abs-path -fprofile-arcs -ftest-coverage" 1>/dev/null 2>/dev/null
         echo "Build ${approach} ${base} jsish"
         cd ../jsish && make 1>/dev/null 2>/dev/null
         echo "Build ${approach} ${base} quickjs"

@@ -384,9 +384,9 @@ def test_input_files(input_set_list, subject, info_num, start_time, n_iter):
     return cov_vec
 
 
-##############################
-### Generate Pruning List. ###
-##############################
+####################################
+### Generate Redundant Sequences ###
+####################################
 def compare_subpaths(long_sp, short_sp):
     if long_sp == short_sp:
         return True
@@ -548,7 +548,6 @@ def update_redundant_sequence(info_num, redundant_sequence, parameter_dict, upda
     result = sorted(set(total_clusters.keys()) - captured_covs, key=lambda x: sum(total_clusters[x].values()), reverse=True)
     cluster_diff_list = [sum(total_clusters[result[i]].values()) - sum(total_clusters[result[i+1]].values()) for i in range(len(result)-1)]
     new_top_k = cluster_diff_list.index(max(cluster_diff_list)) + 1
-    # new_top_k = int(0.1 * len(cluster_diff)) + 1
 
     new_redundant_sequence = copy.deepcopy(redundant_sequence)
     clusters_to_update = set(result[:new_top_k])
@@ -569,7 +568,6 @@ def update_redundant_sequence(info_num, redundant_sequence, parameter_dict, upda
             update_param = False
         else:             
             update_param = True
-        
         new_redundant_sequence[cov_key] = capture_rule_from_cluster(seqs_list, parameter_dict, cov_key, update_param)
     
     with open(f"{list_dir}/other_info/{info_num}_seqlist_size.pickle", 'wb') as f:
@@ -579,7 +577,7 @@ def update_redundant_sequence(info_num, redundant_sequence, parameter_dict, upda
     logs += f"Capture from top {len(clusters_to_update)} clusters over {len(result)} in {time.time()-start_time}\n"
     with open(list_dir + "/logs.txt", "a") as f:
         f.write(logs)
-           
+               
     return new_redundant_sequence
 
 
@@ -639,7 +637,7 @@ def run(rule_dict, depths_dict, subject, number_individuals):
         
     info_num = 1
     do_update = True
-    redundant_sequence = {}
+    redundant_sequence = dict()
     n_lines = len(before_cov_vec)
     captured_covs = set()
     while True:
@@ -658,9 +656,10 @@ def run(rule_dict, depths_dict, subject, number_individuals):
                 pickle.dump(total_clusters, f)
 
             with open(list_dir + "/logs.txt", "a") as f:
-                f.write(logs) 
+                f.write(logs)
+
             redundant_sequence = update_redundant_sequence(info_num, redundant_sequence, now_parameter_dict, updated_covs, total_clusters, captured_covs) 
-            
+
             with open(f"{list_dir}/other_info/parameters_{str(info_num).zfill(5)}.pickle", 'wb') as f:
                 pickle.dump(now_parameter_dict, f)
 
@@ -677,10 +676,10 @@ def run(rule_dict, depths_dict, subject, number_individuals):
             tmp_rss = sorted(tmp_rss, key=lambda x:len(x))
             tmp_rss = remove_included_seqs(tmp_rss)
             
-            for redundant_sequence in tmp_rss:
+            for rs in tmp_rss:
                 converted_rs = set()
                 tmp_keys_for_generator = []
-                for sub_sequence in redundant_sequence:
+                for sub_sequence in rs:
                     last_symbol, last_dn = sub_sequence[-2:]
                     prev_subseq = sub_sequence[:-1]
                     if last_symbol not in subseq_for_generator:
@@ -717,7 +716,7 @@ def run(rule_dict, depths_dict, subject, number_individuals):
         new_cov_vec = test_input_files(range(10), subject, info_num, start_time, n_iter)
 
         if no_newline(before_cov_vec, new_cov_vec):
-            logs = f"Iter {info_num} : {before_cov_vec.sum()} / {len(before_cov_vec)} in {time.time() - start_time} with {n_iter*10} inputs\n"
+            logs = f"Iter {info_num} : {before_cov_vec.sum()} in {time.time() - start_time} with {n_iter*10} inputs\n"
             with open(list_dir + "/logs.txt", "a") as f:
                 f.write(logs)
             n_chance += 1
@@ -736,7 +735,7 @@ def run(rule_dict, depths_dict, subject, number_individuals):
                 pickle.dump(before_cov_vec, f)
 
             before_redundant_sequence_name = now_redundant_sequence_name
-            logs = f"Iter {info_num} : {before_cov_vec.sum()} / {len(before_cov_vec)} in {time.time() - start_time} with {n_iter*10} inputs\n"
+            logs = f"Iter {info_num} : {before_cov_vec.sum()} in {time.time() - start_time} with {n_iter*10} inputs\n"
             with open(list_dir + "/logs.txt", "a") as f:
                 f.write(logs)
             os.system(f"cp {before_redundant_sequence_name} {list_dir}/redundant_sequence.pickle")

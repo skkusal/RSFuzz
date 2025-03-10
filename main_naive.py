@@ -2,7 +2,7 @@ import argparse
 import os
 import subprocess
 
-benchmark_dir = os.path.abspath("./benchmark/Naive")
+benchmark_dir = os.path.abspath("./naive-benchmark")
 print(benchmark_dir)
 
 def run_naive(opt):
@@ -111,23 +111,27 @@ if __name__ == "__main__":
         exit(1)
 
     if options.base_fuzzer is None or options.base_fuzzer not in "random prob":
-        print("Please input available base fuzzer name : random or prob")
+        print("Please input available base fuzzer : random or prob")
+        exit(1)
+
+    if options.naive_version is None or options.naive_version not in "naive select capture":
+        print("Please input available naive version : naive, select, or capture")
         exit(1)
         
-    options.result_dir = os.path.abspath(f"{options.result_dir}/{options.benchmark}")
+    options.result_dir = os.path.abspath(f"{options.result_dir}/{options.naive_version}/{options.benchmark}")
     
     if options.benchmark == "QuickJS":
-        options.test_pgm = f"{benchmark_dir}/quickjs/qjs"
-        options.test_dir = f"{benchmark_dir}/quickjs"
+        options.test_pgm = f"{benchmark_dir}/{options.naive_version}/{options.base_fuzzer}/quickjs/qjs"
+        options.test_dir = f"{benchmark_dir}/{options.naive_version}/{options.base_fuzzer}/quickjs"
     elif options.benchmark == "JerryScript":
-        options.test_pgm = f"{benchmark_dir}/jerryscript/build/bin/jerry"
-        options.test_dir = f"{benchmark_dir}/jerryscript/build"
+        options.test_pgm = f"{benchmark_dir}/{options.naive_version}/{options.base_fuzzer}/jerryscript/build/bin/jerry"
+        options.test_dir = f"{benchmark_dir}/{options.naive_version}/{options.base_fuzzer}/jerryscript/build"
     elif options.benchmark == "Jsish":
-        options.test_pgm = f"{benchmark_dir}/jsish/jsish"
-        options.test_dir = f"{benchmark_dir}/jsish"
+        options.test_pgm = f"{benchmark_dir}/{options.naive_version}/{options.base_fuzzer}/jsish/jsish"
+        options.test_dir = f"{benchmark_dir}/{options.naive_version}/{options.base_fuzzer}/jsish"
     else:
         options.test_pgm = "java"
-        options.test_dir = f"{benchmark_dir}/{options.benchmark}-analyser.jar"
+        options.test_dir = f"{benchmark_dir}/{options.naive_version}/{options.base_fuzzer}/{options.benchmark}-analyser.jar"
     
     print("target program :", options.test_pgm)
     print("Dir of target program :", options.test_dir)

@@ -253,7 +253,7 @@ def run(rule_dict, depths_dict, subject, redundant_sequence):
 
 
 if __name__ == "__main__":
-    print("#################Run Cutfuzz offline######################")
+    print("################# Run Testing #################")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--benchmark",

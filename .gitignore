@@ -1,4 +1,6 @@
 benchmark/
+naive-benchmark/
 *__pycache__/
 test*.sh
 *_results/
+build_naives.sh
