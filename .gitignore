@@ -4,3 +4,4 @@ naive-benchmark/
 test*.sh
 *_results/
 build_naives.sh
+*.ipynb

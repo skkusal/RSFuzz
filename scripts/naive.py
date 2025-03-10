@@ -698,7 +698,7 @@ def capture_rule_from_cluster(seqs_list, parameter_dict, covkey, update_param):
     with open(f"{list_dir}/redundant_sequences/prev_captured_{covkey}.pickle", 'wb') as f:
         pickle.dump((max(labels),n_used_clusters,tmp_captured_sequences), f)
     
-    parameter_dict[covkey].append((n_used_clusters, len(tmp_captured_sequences)))
+    # parameter_dict[covkey].append((n_used_clusters, len(tmp_captured_sequences)))
     
     tmp_pl = []
     
@@ -866,8 +866,8 @@ def run(rule_dict, depths_dict, subject, number_individuals):
                 f.write(logs) 
             redundant_sequence = update_redundant_sequence(info_num, redundant_sequence, now_parameter_dict, updated_covs, total_clusters, captured_covs) 
             
-            with open(f"{list_dir}/other_info/parameters_{str(info_num).zfill(5)}.pickle", 'wb') as f:
-                pickle.dump(now_parameter_dict, f)
+            # with open(f"{list_dir}/other_info/parameters_{str(info_num).zfill(5)}.pickle", 'wb') as f:
+            #     pickle.dump(now_parameter_dict, f)
 
             # Make PL for generator
             subseq_for_generator = {}
