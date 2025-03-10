@@ -118,7 +118,7 @@ if __name__ == "__main__":
         print("Please input available naive version : naive, select, or capture")
         exit(1)
         
-    options.result_dir = os.path.abspath(f"{options.result_dir}/{options.naive_version}/{options.benchmark}")
+    options.result_dir = os.path.abspath(f"{options.result_dir}/{options.naive_version}-{options.base_fuzzer}/{options.benchmark}")
     
     if options.benchmark == "QuickJS":
         options.test_pgm = f"{benchmark_dir}/{options.naive_version}/{options.base_fuzzer}/quickjs/qjs"

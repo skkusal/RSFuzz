@@ -880,7 +880,8 @@ def run(rule_dict, depths_dict, subject, number_individuals):
                 tmp_rss += redundant_sequence[cov_key]
 
             tmp_rss = sorted(tmp_rss, key=lambda x:len(x))
-            tmp_rss = remove_included_seqs(tmp_rss)
+            if naive_version == "capture":
+                tmp_rss = remove_included_seqs(tmp_rss)
             
             for redundant_sequence in tmp_rss:
                 converted_rs = set()
