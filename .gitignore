@@ -1,7 +1,6 @@
-benchmark/
-naive-benchmark/
+*benchmark/
 *__pycache__/
 test*.sh
-*_results/
-build_naives.sh
+*results*
 *.ipynb
+lessimportant_ratio/
