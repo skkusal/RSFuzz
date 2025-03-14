@@ -63,6 +63,7 @@ For more details about arguments, you can use `--help` commands:
 
 ```bash
 $python3 main_rsfuzz.py --help
+
 usage: main_rsfuzz.py [options]
 
 Options for RSFuzz
@@ -87,6 +88,7 @@ options:
 Since coverage results are stored in output files, we only provide a Python file, `error_check.py`, to check bug-finding results. There are two required arguments: `benchmark` (target program) and `error_dir` (e.g., `*/capture_data/error`).
 ```bash
 $ python3 error_check.py --benchmark Gson --error_dir rsfuzz_results/random/argo/captured_data/error
+
 Exception Type                                    N uniques
 java.lang.ClassCastException                      3
 java.lang.IllegalArgumentException                10
