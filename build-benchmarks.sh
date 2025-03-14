@@ -2,7 +2,7 @@
 
 rm -rf benchmark
 
-cp -r benchmark-srcs benchmark
+cp -r benchmark-src benchmark
 echo "Build ${approach} ${base} jerryscript"
 cd benchmark/jerryscript && python3 tools/build.py --compile-flag "-fprofile-abs-path -fprofile-arcs -ftest-coverage" 1>/dev/null 2>/dev/null
 echo "Build ${approach} ${base} jsish"
