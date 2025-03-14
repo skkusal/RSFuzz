@@ -7,8 +7,8 @@ RSFuzz is a tool designed to minimize redundant input generation in grammar-base
 We recommend using a Docker image for quick and easy installation. For more details about the installation process, please check `Dockerfile`.
 
 ```bash
-$ docker pull {}
-$ docker run --rm -it --ulimit='stack=-1:-1' {}
+$ docker pull anonymrsfuzz/rsfuzz
+$ docker run --rm -it --ulimit='stack=-1:-1' anonymrsfuzz/rsfuzz
 ```
 
 ## Benchmarks
