@@ -13,11 +13,6 @@ def run_rsfuzz(opt):
     os.mkdir(os.path.join(opt.result_dir, "capture_data"))
     os.mkdir(os.path.join(opt.result_dir, "capture_data", "coverage"))
     os.mkdir(os.path.join(opt.result_dir, "capture_data", "unique_covs"))
-    os.mkdir(os.path.join(opt.result_dir, "capture_data", "unique_trees"))
-    os.mkdir(os.path.join(opt.result_dir, "capture_data", "captured_clusters"))
-    os.mkdir(os.path.join(opt.result_dir, "capture_data", "redundant_sequences"))
-    os.mkdir(os.path.join(opt.result_dir, "capture_data", "other_info"))
-    os.mkdir(os.path.join(opt.result_dir, "capture_data", "error"))
     if os.path.isdir(os.path.join(opt.result_dir, "test_data")):
         os.system("rm -rf " + os.path.join(opt.result_dir, "test_data"))
     os.mkdir(os.path.join(opt.result_dir, "test_data"))
@@ -37,18 +32,9 @@ def run_rsfuzz(opt):
 
     if opt.benchmark == "Rhino":
         file_extension = "js"
-
-
-    subprocess.call(
-        f"timeout {str(opt.capture_time)} python3 scripts/rsfuzz.py --benchmark {opt.benchmark} --fileExtension {file_extension} --base_fuzzer {opt.base_fuzzer} --list_dir {os.path.join(opt.result_dir, 'capture_data')} --result_dir {os.path.join(opt.result_dir, 'test_data')} --n_num {str(opt.n_num)} --test_dir {opt.test_dir} --test_pgm {test_pgm}",
-        shell=True,
-        stderr=subprocess.STDOUT,
-    )  
-    redundant_sequence = os.path.abspath(os.path.join(opt.result_dir, "capture_data","redundant_sequence.pickle"))
-    print("RSFuzz redundant sequence generation finished")
     
     subprocess.call(
-        f"timeout {str(opt.test_time)} python3 scripts/testing.py --benchmark {opt.benchmark} --fileExtension {file_extension} --base_fuzzer {opt.base_fuzzer} --list_dir {os.path.join(opt.result_dir, 'capture_data')} --result_dir {os.path.join(opt.result_dir, 'test_data')} --n_num {10000} --test_dir {opt.test_dir} --test_pgm {test_pgm} --redundant_sequence {redundant_sequence}",
+        f"python3 scripts/input_ratio.py --benchmark {opt.benchmark} --fileExtension {file_extension} --base_fuzzer {opt.base_fuzzer} --list_dir {os.path.join(opt.result_dir, 'capture_data')} --result_dir {os.path.join(opt.result_dir, 'test_data')} --n_test_inputs {opt.n_test_inputs} --test_dir {opt.test_dir} --test_pgm {test_pgm} --redundant_sequence {opt.redundant_sequence}",
         shell=True,
         stderr=subprocess.STDOUT,
     )  
@@ -68,31 +54,30 @@ if __name__ == "__main__":
         help="random or prob",
     )
     parser.add_argument(
-        "--capture_time",
-        dest="capture_time",
-        type=int,
-        default=43200,
-        help="Capture time(sec) (Default: 43200 = 12h)",
+        "--redundant_sequence",
+        dest="redundant_sequence",
+        default="None",
+        help="file path of redundant sequence",
     )
     parser.add_argument(
-        "--test_time",
-        dest="test_time",
+        "--n_test_inputs",
+        dest="n_test_inputs",
         type=int,
-        default=43200,
-        help="Test time(sec) (Default: 43200 = 12h)",
+        default=100000,
+        help="# of inputs to measure covered line set (Default: 100000)",
     )
     parser.add_argument(
         "--result_dir",
         dest="result_dir",
-        default="results_rsfuzz",
-        help="Result directory (Default: results_rsfuzz)",
+        default="results_inputratio",
+        help="Result directory (Default: results_inputratio)",
     )
     parser.add_argument(
         "--n_num",
         dest="n_num",
         type=int,
         default=2000,
-        help="Hyperparameter to hanlde # of input generation in a iteration (Default: 2000)",
+        help="Hyperparameter to hanlde # of inputs generation in a iteration (Default: 2000)",
     )
 
     options = parser.parse_args()
@@ -108,14 +93,14 @@ if __name__ == "__main__":
     options.result_dir = os.path.abspath(f"{options.result_dir}/{options.base_fuzzer}/{options.benchmark}")
     
     if options.benchmark == "QuickJS":
-        options.test_pgm = f"{benchmark_dir}/quickjs/qjs"
-        options.test_dir = f"{benchmark_dir}/quickjs"
+        options.test_pgm = f"{benchmark_dir}/{options.base_fuzzer}/quickjs/qjs"
+        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/quickjs"
     elif options.benchmark == "JerryScript":
-        options.test_pgm = f"{benchmark_dir}/jerryscript/build/bin/jerry"
-        options.test_dir = f"{benchmark_dir}/jerryscript/build"
+        options.test_pgm = f"{benchmark_dir}/{options.base_fuzzer}/jerryscript/build/bin/jerry"
+        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/jerryscript/build"
     elif options.benchmark == "Jsish":
-        options.test_pgm = f"{benchmark_dir}/jsish/jsish"
-        options.test_dir = f"{benchmark_dir}/jsish"
+        options.test_pgm = f"{benchmark_dir}/{options.base_fuzzer}/jsish/jsish"
+        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/jsish"
     else:
         options.test_pgm = "java"
         options.test_dir = f"{benchmark_dir}/{options.benchmark}-analyser.jar"

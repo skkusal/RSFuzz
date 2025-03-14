@@ -600,7 +600,6 @@ def no_newline(cov1, cov2):
 def run(rule_dict, depths_dict, subject, number_individuals):
     start_time = time.time()
     now_parameter_dict = {}
-    before_redundant_sequence_name = "-"
     now_redundant_sequence_name = None
     n_chance = 0
 
@@ -610,13 +609,6 @@ def run(rule_dict, depths_dict, subject, number_individuals):
 
     n_iter = 10
     max_n_chance = 1
-    
-    possible_children_devnums = {}
-    for token in rule_dict:
-        possible_children_devnums[token] = set()
-        for child in rule_dict[token]:
-            if child[2] > 0:
-                possible_children_devnums[token].add(child[1])
     
     os.system(f'rm -rf "{baseDirectory}"')
     os.system(f'mkdir "{baseDirectory}"')
@@ -699,10 +691,12 @@ def run(rule_dict, depths_dict, subject, number_individuals):
                     if (last_dn,converted_rs) not in rs_for_generator[last_symbol]:
                         rs_for_generator[last_symbol].append((last_dn, converted_rs))
 
-                   
             now_redundant_sequence_name = f"{list_dir}/redundant_sequences/redundant_sequence_{info_num}.pickle"
+                    
             with open(now_redundant_sequence_name, "wb") as f:
                 pickle.dump((subseq_for_generator, idx_subseq, rs_for_generator), f)
+                
+            os.system(f"cp {now_redundant_sequence_name} {list_dir}/redundant_sequence.pickle")
  
             with open(f"{list_dir}/redundant_sequences/covs_rule_dict_{info_num}.pickle", "wb") as f:
                 pickle.dump(redundant_sequence, f)
@@ -733,12 +727,10 @@ def run(rule_dict, depths_dict, subject, number_individuals):
             before_cov_vec |= new_cov_vec
             with open(list_dir + "/total_coverage.pickle", "wb") as f:
                 pickle.dump(before_cov_vec, f)
-
-            before_redundant_sequence_name = now_redundant_sequence_name
             logs = f"Iter {info_num} : {before_cov_vec.sum()} in {time.time() - start_time} with {n_iter*10} inputs\n"
             with open(list_dir + "/logs.txt", "a") as f:
                 f.write(logs)
-            os.system(f"cp {before_redundant_sequence_name} {list_dir}/redundant_sequence.pickle")
+        
 
         info_num += 1
 

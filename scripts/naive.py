@@ -774,8 +774,10 @@ def update_redundant_sequence(info_num, redundant_sequence, parameter_dict, upda
                     tmp_seqs = pickle.load(f)
                     seqs_list.append([tmp_seqs, cnt])
             tmp_rs = naive_capture(seqs_list)
+        
             if len(tmp_rs) == 1 and len(tmp_rs[0]) == 1:
                 continue
+        
             new_redundant_sequence[cov_key] = [set(tmp_rs)]         
 
     logs = "--------------------------------------------------------------\n"
@@ -805,7 +807,6 @@ def no_newline(cov1, cov2):
 def run(rule_dict, depths_dict, subject, number_individuals):
     start_time = time.time()
     now_parameter_dict = {}
-    before_redundant_sequence_name = "-"
     now_redundant_sequence_name = None
     n_chance = 0
 
@@ -815,14 +816,7 @@ def run(rule_dict, depths_dict, subject, number_individuals):
 
     n_iter = 10
     max_n_chance = 1
-    
-    possible_children_devnums = {}
-    for token in rule_dict:
-        possible_children_devnums[token] = set()
-        for child in rule_dict[token]:
-            if child[2] > 0:
-                possible_children_devnums[token].add(child[1])
-    
+     
     os.system(f'rm -rf "{baseDirectory}"')
     os.system(f'mkdir "{baseDirectory}"')
     for current_generation in range(10):
@@ -883,10 +877,12 @@ def run(rule_dict, depths_dict, subject, number_individuals):
             if naive_version == "capture":
                 tmp_rss = remove_included_seqs(tmp_rss)
             
-            for redundant_sequence in tmp_rss:
+            for rs in tmp_rss:
                 converted_rs = set()
                 tmp_keys_for_generator = []
-                for sub_sequence in redundant_sequence:
+                for sub_sequence in rs:
+                    if len(sub_sequence) == 1:
+                        continue
                     last_symbol, last_dn = sub_sequence[-2:]
                     prev_subseq = sub_sequence[:-1]
                     if last_symbol not in subseq_for_generator:
@@ -908,8 +904,11 @@ def run(rule_dict, depths_dict, subject, number_individuals):
 
                    
             now_redundant_sequence_name = f"{list_dir}/redundant_sequences/redundant_sequence_{info_num}.pickle"
+            
             with open(now_redundant_sequence_name, "wb") as f:
                 pickle.dump((subseq_for_generator, idx_subseq, rs_for_generator), f)
+                
+            os.system(f"cp {now_redundant_sequence_name} {list_dir}/redundant_sequence.pickle")
  
             with open(f"{list_dir}/redundant_sequences/covs_rule_dict_{info_num}.pickle", "wb") as f:
                 pickle.dump(redundant_sequence, f)
@@ -941,11 +940,10 @@ def run(rule_dict, depths_dict, subject, number_individuals):
             with open(list_dir + "/total_coverage.pickle", "wb") as f:
                 pickle.dump(before_cov_vec, f)
 
-            before_redundant_sequence_name = now_redundant_sequence_name
-            logs = f"Iter {info_num} : {before_cov_vec.sum()} / {len(before_cov_vec)} in {time.time() - start_time} with {n_iter*10} inputs\n"
+            logs = f"Iter {info_num} : {before_cov_vec.sum()} in {time.time() - start_time} with {n_iter*10} inputs\n"
             with open(list_dir + "/logs.txt", "a") as f:
                 f.write(logs)
-            os.system(f"cp {before_redundant_sequence_name} {list_dir}/redundant_sequence.pickle")
+
 
         info_num += 1
 

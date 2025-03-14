@@ -5,6 +5,7 @@ import argparse
 import Generator
 import pickle
 import time
+import hashlib
 import numpy as np
 
 ###############################
@@ -31,6 +32,165 @@ def generate_input_files(current_generation, redundant_sequence, rule_dict, dept
         depths_dict,
         redundant_sequence
     )
+
+def compute_tree_hash(dt_name, hash_algo='sha256'):
+    hash_func = hashlib.new(hash_algo)
+    with open(dt_name, 'rb') as file:
+        chunk = file.read()
+    hash_func.update(chunk)
+    return hash_func.hexdigest()
+
+def compute_coverage_hash(cov):
+    return hash(tuple(cov))
+
+def branch_handler(ktest_gcov):
+    with open(ktest_gcov, 'r', errors='ignore') as f:
+        lines = f.readlines()
+    # print(len(lines))
+    result_vec = []   
+    for l in lines:
+        if l[8] == '-':
+            continue
+        if l[8] == '#':
+            result_vec.append(False)
+        else:
+            result_vec.append(True)
+    return np.array(result_vec)
+
+def csv_handler(csv_name):
+    with open(csv_name, "r") as f:
+        cov = f.read()
+        cov_vec = []
+        for k in range(len(cov)):
+            if k + 2 > len(cov):
+                break
+            elif cov[k : k + 2] == "NO":
+                cov_vec.append(False)
+            elif k + 3 > len(cov):
+                break
+            elif cov[k : k + 3] == "YES":
+                cov_vec.append(True)
+            else:
+                continue
+            
+        return np.array(cov_vec)
+
+def create_csv(best_generation, subject, total_clusters, unique_dt, n_iter):
+    input_files_directory = "run-" + str(best_generation).zfill(5) + "/samples"
+    csv_files_directory = "run-" + str(best_generation).zfill(5) + "/csv"
+
+    input_files = os.path.join(baseDirectory, input_files_directory)
+    csv_files = os.path.join(baseDirectory, csv_files_directory)
+    if not os.path.isdir(csv_files):
+        os.mkdir(csv_files, 0o755)
+
+    error_code_file = os.path.join(baseDirectory, "run-" + str(best_generation).zfill(5), "error_code.txt")
+    error_code_file = os.path.abspath(error_code_file)
+        
+    if is_java:
+        for i in range(n_iter):
+            input_name = input_files + "/" + str(i).zfill(8) + "." + fileExtension
+            tree_name = input_files + "/" + str(i).zfill(8) + "_tree.pickle"
+            if not os.path.exists(input_name):
+                break
+            csv_name = csv_files + "/" + str(i).zfill(8) + ".csv"
+            tmp_dt_hash = compute_tree_hash(tree_name)
+            
+            if tmp_dt_hash in dt_idx_dict:
+                dt_key = dt_idx_dict[tmp_dt_hash]
+                cov_key = unique_dt[dt_key]
+
+            else:                        
+                dt_key = len(dt_idx_dict)
+                # os.system(f"cp {tree_name} {list_dir}/unique_trees/{dt_key}.pickle")
+                dt_idx_dict[tmp_dt_hash] = dt_key
+                
+                if dt_key not in unique_dt:
+                    if not os.path.isfile(csv_name):
+                        subprocess.call(
+                            f"java -jar {test_dir} {str(subject)} file-coverage-l {input_name} {csv_name} 1>/dev/null 2>/dev/null",
+                            shell=True,
+                        )
+                    tmp_cov = csv_handler(csv_name)
+                    tmp_cov_hash = compute_coverage_hash(tmp_cov)
+                    
+                    if tmp_cov_hash not in cov_idx_dict:
+                        total_clusters[len(cov_idx_dict)] = 0
+                        with open(f"{list_dir}/unique_covs/{len(cov_idx_dict)}.pickle", 'wb') as f:
+                            pickle.dump(tmp_cov, f)
+                        cov_idx_dict[tmp_cov_hash] = len(cov_idx_dict)
+                        coverage_list.append(tmp_cov)
+                    
+                    cov_key = cov_idx_dict[tmp_cov_hash]
+                    unique_dt[dt_key] = cov_key
+                else:
+                    cov_key = unique_dt[dt_key]
+
+            total_clusters[cov_key] += 1
+    
+    else:
+        root_dir = os.getcwd()
+        input_files = os.path.abspath(input_files)
+        csv_files = os.path.abspath(csv_files)
+        os.chdir(test_dir)
+        
+        for i in range(n_iter):
+            os.system("find " + test_dir + ' -name "*.gcda" -exec rm {} \;')
+            input_name = input_files + "/" + str(i).zfill(8) + "." + fileExtension
+            tree_name = input_files + "/" + str(i).zfill(8) + "_tree.pickle"
+            if not os.path.exists(input_name):
+                break
+            info_name = csv_files + "/" + str(i).zfill(8) + ".info"
+            
+            tmp_dt_hash = compute_tree_hash(tree_name)
+            if tmp_dt_hash in dt_idx_dict:
+                dt_key = dt_idx_dict[tmp_dt_hash]
+                cov_key = unique_dt[dt_key]
+            else:
+                dt_key = len(dt_idx_dict)
+                # os.system(f"cp {tree_name} {list_dir}/unique_trees/{dt_key}.pickle")
+                dt_idx_dict[tmp_dt_hash] = dt_key
+
+                if dt_key not in unique_dt:
+                    try:
+                        error_code = subprocess.run(
+                            [test_pgm, input_name],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                            timeout=1,
+                        ).returncode
+                    except:
+                        error_code = -999
+                    with open(error_code_file, "a") as f:
+                        f.write(str(i).zfill(8) + " : " + str(error_code) + "\n")
+
+                    os.system("find " + test_dir + ' -name "*.gcda" -exec gcov -H {} 1>/dev/null \;')
+                    os.system('find . -name "*.gcov" -exec cat {}>' + info_name +' \;')
+                    os.system('find . -name "*.gcov" -exec rm {} 1>/dev/null 2>/dev/null \;')
+
+                    tmp_cov = branch_handler(info_name)
+                    
+                    if len(tmp_cov) == 0:
+                        tmp_cov = np.full(1, False)
+                    
+                    tmp_cov_hash = compute_coverage_hash(tmp_cov)
+                    
+                    if tmp_cov_hash not in cov_idx_dict:
+                        total_clusters[len(cov_idx_dict)] = 0
+                        with open(f"{list_dir}/unique_covs/{len(cov_idx_dict)}.pickle", 'wb') as f:
+                            pickle.dump(tmp_cov, f)
+                        cov_idx_dict[tmp_cov_hash] = len(cov_idx_dict)
+                        coverage_list.append(tmp_cov)
+                    
+                    cov_key = cov_idx_dict[tmp_cov_hash]
+                    unique_dt[dt_key] = cov_key
+                else:                   
+                    cov_key = unique_dt[dt_key]
+               
+            total_clusters[cov_key] += 1
+            
+        os.chdir(root_dir)
+
 
 def branch_handler(ktest_gcov):
     with open(ktest_gcov, 'r', errors='ignore') as f:
@@ -205,56 +365,28 @@ def merge_covs(cov1, cov2):
 
 def run(rule_dict, depths_dict, subject, redundant_sequence):
     start_time = time.time()
-    not_baseline = True
-    if os.path.exists(list_dir + "/total_coverage.pickle"):
-        with open(list_dir + "/total_coverage.pickle", "rb") as f:
-            total_cov = pickle.load(f)
-    else:
-        not_baseline = False
-        total_cov = None
+    
+    total_clusters = {}
+    unique_dt = {}
+    unique_seqs = {}
     
     os.system(f'rm -rf "{baseDirectory}"')
     os.system(f'mkdir "{baseDirectory}"')
     for current_generation in range(10):
         generate_input_files(current_generation, redundant_sequence, rule_dict, depths_dict)
-    if not_baseline:
-        total_cov |= test_input_files(range(10), subject, 0, start_time)
-    else:
-        total_cov = test_input_files(range(10), subject, 0, start_time)
-    with open(os.path.join(list_dir, "time.txt"), "a") as f:
-        f.write(
-            str(0).zfill(5)
-            + "_cov.info end time : "
-            + str(time.time() - start_time)
-            + "\n"
-        )
-    logs = f"Testing started\n{time.time()-start_time}\tIter-0\t{total_cov.sum()}\n"
+        
+    for current_generation in range(10):
+        create_csv(current_generation, subject, total_clusters, unique_dt, number_individuals)
+    
+    with open(f"{list_dir}/result.pickle", "wb") as f:
+        pickle.dump(total_clusters, f)
     with open(list_dir + "/logs.txt", "a") as f:
-        f.write(logs)
-        
-    info_num = 1
+        f.write(f"less important inputs : {total_inputs - len(total_clusters)} / {total_inputs}")
 
-    while True:
-
-        os.system(f'rm -rf "{baseDirectory}"')
-        os.system(f'mkdir "{baseDirectory}"')
-        
-        for current_generation in range(10):
-            generate_input_files(current_generation, redundant_sequence, rule_dict, depths_dict)
-            
-        new_cov_vec = test_input_files(range(10), subject, info_num, start_time)
-        total_cov |= new_cov_vec
-
-        logs = f"{time.time()-start_time}\tIter-{info_num}\t{total_cov.sum()}\n"
-        with open(list_dir + "/logs.txt", "a") as f:
-            f.write(logs)
-        with open(list_dir + "/total_coverage.pickle", "wb") as f:
-            pickle.dump(total_cov, f)
-        info_num += 1
 
 
 if __name__ == "__main__":
-    print("################# Run Testing #################")
+    print("################# Run Input Ratio Testing #################")
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--benchmark",
@@ -277,8 +409,8 @@ if __name__ == "__main__":
         dest="result_dir",
     )
     parser.add_argument(
-        "--n_num",
-        dest="n_num",
+        "--n_test_inputs",
+        dest="n_test_inputs",
         type=int,
     )
     parser.add_argument(
@@ -300,10 +432,11 @@ if __name__ == "__main__":
     fileExtension = options.fileExtension
     baseDirectory = options.result_dir
     
-    if options.redundant_sequence:
+    if options.redundant_sequence != "None":
         with open(options.redundant_sequence, 'rb') as f:
             redundant_sequence = pickle.load(f)
     else:
+        print("Testing baseline fuzzer")
         redundant_sequence = ({}, {}, {})
     
     # print(redundant_sequence)
@@ -318,7 +451,8 @@ if __name__ == "__main__":
         test_pgm = options.test_pgm
 
     # Parameters
-    number_individuals = options.n_num // 10
+    total_inputs = options.n_test_inputs
+    number_individuals = options.n_test_inputs // 10
     best_generation_k = 10
 
     cov_idx_dict = {}

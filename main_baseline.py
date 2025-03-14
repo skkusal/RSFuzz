@@ -2,7 +2,7 @@ import argparse
 import os
 import subprocess
 
-benchmark_dir = os.path.abspath("./benchmark/Baseline")
+benchmark_dir = os.path.abspath("./benchmark")
 print(benchmark_dir)
 
 def run_baseline_test(opt):
@@ -57,13 +57,13 @@ if __name__ == "__main__":
         dest="test_time",
         type=int,
         default=86400,
-        help="Test time(sec) (Default: 43200 = 12h)",
+        help="Test time(sec) (Default: 86400 = 24h)",
     )
     parser.add_argument(
         "--result_dir",
         dest="result_dir",
-        default="baseline_results",
-        help="Result directory (Default: baseline_results)",
+        default="results_baseline",
+        help="Result directory (Default: results_baseline)",
     )
     parser.add_argument(
         "--n_num",
@@ -79,20 +79,20 @@ if __name__ == "__main__":
         print("Please input available benchmark name\nAvailable benchmarks : JerryScript, Jsish, QuickJS, Rhino, Argo, Genson, Gson, JsonToJava")
         exit(1)
         
-    options.result_dir = os.path.abspath(options.result_dir)
+    options.result_dir = os.path.abspath(f"{options.result_dir}/{options.base_fuzzer}/{options.benchmark}")
 
     if options.benchmark == "QuickJS":
-        options.test_pgm = f"{benchmark_dir}/{options.base_fuzzer}/quickjs/qjs"
-        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/quickjs"
+        options.test_pgm = f"{benchmark_dir}/quickjs/qjs"
+        options.test_dir = f"{benchmark_dir}/quickjs"
     elif options.benchmark == "JerryScript":
-        options.test_pgm = f"{benchmark_dir}/{options.base_fuzzer}/jerryscript/build/bin/jerry"
-        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/jerryscript/build"
+        options.test_pgm = f"{benchmark_dir}/jerryscript/build/bin/jerry"
+        options.test_dir = f"{benchmark_dir}/jerryscript/build"
     elif options.benchmark == "Jsish":
-        options.test_pgm = f"{benchmark_dir}/{options.base_fuzzer}/jsish/jsish"
-        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/jsish"
+        options.test_pgm = f"{benchmark_dir}/jsish/jsish"
+        options.test_dir = f"{benchmark_dir}/jsish"
     else:
         options.test_pgm = "java"
-        options.test_dir = f"{benchmark_dir}/{options.base_fuzzer}/{options.benchmark}-analyser.jar"
+        options.test_dir = f"{benchmark_dir}/{options.benchmark}-analyser.jar"
     
     print("target program :", options.test_pgm)
     print("Dir of target program :", options.test_dir)
