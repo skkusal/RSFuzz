@@ -382,6 +382,8 @@ def run(rule_dict, depths_dict, subject, redundant_sequence):
         pickle.dump(total_clusters, f)
     with open(list_dir + "/logs.txt", "a") as f:
         f.write(f"less important inputs : {total_inputs - len(total_clusters)} / {total_inputs}")
+    
+    print(f"less important inputs : {total_inputs - len(total_clusters)} / {total_inputs}")
 
 
 

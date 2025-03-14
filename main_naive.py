@@ -1,6 +1,7 @@
 import argparse
 import os
 import subprocess
+import pickle
 
 benchmark_dir = os.path.abspath("./benchmark")
 print(benchmark_dir)
@@ -53,6 +54,10 @@ def run_naive(opt):
         stderr=subprocess.STDOUT,
     )  
     print("Naive test finished")
+    
+    with open(f"{opt.result_dir}/capture_data/total_coverage.pickle", 'rb') as f:
+        totalcov = pickle.load(f)
+    print(f"# Covered lines : {totalcov.sum()}")
     return
 
 if __name__ == "__main__":

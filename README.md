@@ -4,7 +4,7 @@ RSFuzz is a tool designed to minimize redundant input generation in grammar-base
 
 ## Installation
 
-We recommend using a Docker image for quick and easy installation.
+We recommend using a Docker image for quick and easy installation. For more details about the installation process, please check `Dockerfile`.
 
 ```bash
 $ docker pull {}
@@ -31,7 +31,7 @@ The results will be saved in the `{result_dir}/{base_fuzzer}/{benchmark}/capture
 1. Redundant sequences : `redundant_sequence.pickle` file
 2. Test logs : `logs.txt` file
 3. Error cases and their derivation trees : `error/*` files
-4. Coverage results : `total_coverage.pickle` and `total_coverage_testing.pickle` files
+4. Coverage results : `total_coverage.pickle` file
 
 ## Additional Experiments
 
