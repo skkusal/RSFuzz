@@ -7,8 +7,8 @@ RSFuzz is a tool designed to minimize redundant input generation in grammar-base
 We recommend using a Docker image for quick and easy installation. For more details about the installation process, please check `Dockerfile`.
 
 ```bash
-$ docker pull anonymrsfuzz/rsfuzz
-$ docker run --rm -it --ulimit='stack=-1:-1' anonymrsfuzz/rsfuzz
+$ docker pull anonymrsfuzz/rsfuzz:v1.0
+$ docker run --rm -it --ulimit='stack=-1:-1' anonymrsfuzz/rsfuzz:v1.0
 ```
 
 ## Benchmarks
@@ -16,7 +16,7 @@ $ docker run --rm -it --ulimit='stack=-1:-1' anonymrsfuzz/rsfuzz
 In the docker image, all 8 benchmarks we used are installed in 'root/rsfuzz/benchmark'. Details of benchmarks are as follows:
 ![benchmark_table](./Benchmarks.png)
 
-## How to Rrun RSFuzz
+## How to Run RSFuzz
 
 You can run RSFuzz and baseline fuzzers with the following commands in the 'root/rsfuzz' directory. There are two required arguments:`benchmark` (target program) and `base_fuzzer` (`random` or `prob`).
 
