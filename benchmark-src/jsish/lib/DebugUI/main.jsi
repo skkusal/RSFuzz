@@ -1,5 +1,0 @@
-#!/usr/bin/env jsish
-
-source('DebugUI.jsi', {isMain:true});
-
-

@@ -1,5 +1,0 @@
-#!/usr/bin/env jsish
-
-source('SqliteUI.jsi', {isMain:true});
-
-

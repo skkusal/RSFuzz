@@ -1,4 +1,0 @@
-var i = 0;
-while  (i++ < 3) {
-    LogInfo("test loop: %d", i);
-}
