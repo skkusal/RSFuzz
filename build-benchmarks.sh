@@ -17,6 +17,15 @@ for pgm in $javabenchs
 do
     cp coverage-analyser.jar ${pgm}-analyser.jar
 done
+
+javabenchs="commonmark jackson-dataformat-csv super-csv txtmark"
+
+for pgm in $javabenchs
+do
+    cp libs/${pgm}-subject.jar ${pgm}-analyser.jar
+done
+
 rm coverage-analyser.jar
+rm -rf libs
 cd ..
 echo "Complete ${base} benchmark build"
