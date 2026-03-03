@@ -7,7 +7,7 @@ RSFuzz is a tool designed to minimize coverage-equivalent input generation in gr
 We recommend using a Docker image for quick and easy installation. For more details about the installation process, please check `Dockerfile`.
 
 ```bash
-$ docker pull {}
+$ docker pull anonymrsfuzz/rsfuzz:v1.1
 $ docker run --rm -it --ulimit='stack=-1:-1' {}
 ```
 
