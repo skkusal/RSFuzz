@@ -1,0 +1,27 @@
+#!/usr/local/bin/jsish -T Debug %s -Trace true a b c
+
+LogTrace("Init");
+LogDebug("Loading mytest2");
+
+function mytest2(args:array=void, conf:object=void) {
+    var self = {
+        count: 0
+    };
+    const options = { // Here is my test.
+        Debug       :false,     // LogDebug output.
+        Trace       :false,     // LogTrace output.
+        label       :''         // Some other argument.
+    };
+    
+    moduleOpts(options, self, conf);
+    LogDebug("Opts parsed");
+    for (var msg of args) {
+        self.count++;
+        LogTrace("testing:", msg);
+    }
+    puts("Done");
+    return self;
+}
+
+module(mytest2);
+

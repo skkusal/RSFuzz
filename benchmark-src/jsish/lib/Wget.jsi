@@ -1,0 +1,154 @@
+#!/usr/bin/env jsish
+
+function Wget(fileargs:array|string, conf:object=void) {
+    
+    const options = { // Web client for downloading files from url
+        force       : false,        // Overwrite output file, if exists.
+        headers     : [],           // Header fields to send.
+        nowait      : false,        // Just return object: caller will call update.
+        onDone      : null,         // Callback when done.
+        O           : '',           // Output file name, or - for stdout, . for response: default is url tail.
+        sslDir      :null,          // Enable ssl and use certs in this dir
+        sslFnCert   :'cert.pem',    // File name in sslDir of cert.
+        sslFnKey    :'privkey.pem', // File name in sslDir of key.
+        unzip       : false,        // Unzip file after download
+        wsOpts      : {},           // Websocket options.
+        wsdebug     : 0,            // WebSockets debug level.
+    };
+    
+    var self = {
+        address     : '',
+        done        : false,
+        fd          : null,
+        path        : '',
+        port        : -1,
+        post        : '',           // Post file upload (UNIMPL).
+        scheme      : 'http',       // Url scheme
+        protocol    : 'get',
+        response    : '',
+        url         : null,
+        ssl         :false,
+        sslcert     :null,
+        sslkey      :null,
+        ws          :null,
+    };
+
+    moduleOpts(options, self);
+    
+    if (self.port === -1)
+        self.port = 80;
+        
+    function WsRecv(ws:userobj, id:number, str:string) {
+        LogTrace("LEN: "+str.length);
+        LogTrace("DATA", str);
+        if (self.O === '.') {
+            self.response += str;
+            return;
+        }
+        try {
+            if (!self.fd)
+                self.fd = new Channel((self.O==='-'?"stdout":self.O), 'wb+');
+            self.fd.write(str);
+        } catch(e) {
+            LogError('Failed! '+e);
+            throw(e);
+        }
+    }
+    
+    function WsClose(ws:userobj|null, id:number, isError:boolean) {
+        LogTrace("CLOSE");
+        if (isError)
+            puts("Connection error");
+        self.done = true;
+        if (self.fd) {
+            self.fd.close();
+            //delete self.fd;
+        }
+        if (self.onDone)
+            self.onDone(id, self, isError);
+    }
+    
+    if (typeof(fileargs) === 'string')
+        fileargs = [fileargs];
+    if (!fileargs || fileargs.length !== 1)
+        throw "expected a url arg";
+    self.url = fileargs[0];
+    var m = self.url.match(/^([a-zA-Z]+):\/\/([^\/]*+)(.*)$/);
+    if (!m)
+        throw 'invalid url: '+self.url;
+    self.scheme = m[1];
+    self.address = m[2];
+    self.path = m[3];
+    var as = self.address.split(':');
+    if (as.length==2) {
+        self.port = parseInt(as[1]);
+        self.address = as[0];
+    } else  if (as.length != 1)
+        throw 'bad port in address: '+self.address;
+    
+    if (self.O == '')
+        self.O = File.tail(self.path);
+    if (self.O == '')
+        self.O = '.';
+    if (self.O !== '-' && self.O !== '.' && File.exists(self.O)) {
+        if (!self.force)
+            throw 'output file already exists: '+self.O;
+        File.remove(self.O);
+    }
+    if (self.post.length)
+        self.protocol = 'post';
+
+    if (self.sslDir) {
+        if (self.sslFnKey != '') self.sslkey = File.join(self.sslDir, self.sslFnKey);
+        if (self.sslFnCert != '') self.sslcert = File.join(self.sslDir, self.sslFnCert);
+        self.ssl = true;
+    }
+    
+    var wsopts = {
+        client:true,
+        onRecv:WsRecv,
+        onClose:WsClose,
+        debug:self.wsdebug,
+        rootdir:self.path,
+        port:self.port,
+        address:self.address,
+        protocol:self.protocol,
+        clientHost:self.address,
+        sslCert:self.sslcert,
+        sslKey:self.sslkey,
+        ssl:self.ssl,
+    };
+    for (var i in self.wsOpts)
+        wsopts[i] = self.wsOpts[i];
+    if (self.post.length)
+        wsopts.post = self.post;
+    if (self.headers.length)
+        wsopts.headers = self.headers;
+    if (self.scheme === 'https') {
+        if (!Interp.conf('hasOpenSSL'))
+            puts('SSL is not compiled in: falling back to http:');
+        else {
+            if (self.port === 80)
+                wsopts.port = 443;
+            self.ssl = true;
+        }
+    }
+    LogTrace("Starting:", conf, wsopts);
+    self.ws = new WebSocket( wsopts );
+    if (self.nowait)
+        return self;
+    while (!self.done) {
+        Event.update(200);
+        LogTrace("UPDATE");
+    }
+    if (self.unzip)
+        Zip(['unzip', self.O]);
+    
+    self.ws = null; // Need cleanup because local functions prevent context deletion.
+    if (self.response)
+        return self.response;
+}
+
+module(Wget, "1.2", {logmask:'trace'});
+
+

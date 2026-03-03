@@ -13,7 +13,7 @@ $ docker run --rm -it --ulimit='stack=-1:-1' {}
 
 ## Benchmarks
 
-In the docker image, all 8 benchmarks we used are installed in 'root/rsfuzz/benchmark'. Details of benchmarks are as follows:
+In the docker image, all 12 benchmarks we used are installed in 'root/rsfuzz/benchmark'. Details of benchmarks are as follows:
 ![benchmark_table](./Benchmarks.png)
 
 ## How to run RSFuzz

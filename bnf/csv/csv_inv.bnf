@@ -1,0 +1,10 @@
+start = "" @@ 0.9977220957 | csvFile @@ 0.0022779043;
+csvFile = hdr rows @@ 1.0;
+hdr = row @@ 1.0;
+rows = row @@ 0.4671532847 | row rows @@ 0.5328467153;
+row = field fieldTail optCR "\n" @@ 1.0;
+fieldTail = "," field fieldTail @@ 0.487804878 | "" @@ 0.512195122;
+optCR = "\r" @@ 0.5341269841 | "" @@ 0.4658730159;
+field = TEXT @@ 0.4487617712 | STRING @@ 0.254031968 | "" @@ 0.2972062608;
+TEXT = /[^,\\n\\r\"]/+ @@ 1.0;
+STRING = "\"" /(""|[^"])/* "\"" @@ 1.0;

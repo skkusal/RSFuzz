@@ -1,0 +1,19 @@
+function foo() {
+
+
+  function bar() { }
+  var x = 1;
+;  Info.locals();
+;  Info.locals(false);
+;  Info.locals(true);
+}
+
+foo();
+
+/*
+=!EXPECTSTART!=
+Info.locals() ==> { bar:"function bar() {...}", x:1 }
+Info.locals(false) ==> { x:1 }
+Info.locals(true) ==> { bar:"function bar() {...}" }
+=!EXPECTEND!=
+*/
