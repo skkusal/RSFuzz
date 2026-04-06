@@ -8,7 +8,7 @@ We recommend using a Docker image for quick and easy installation. For more deta
 
 ```bash
 $ docker pull anonymrsfuzz/rsfuzz:v1.1
-$ docker run --rm -it --ulimit='stack=-1:-1' {}
+$ docker run --rm -it anonymrsfuzz/rsfuzz:v1.1
 ```
 
 ## Benchmarks
