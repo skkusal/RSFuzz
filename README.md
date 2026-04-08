@@ -25,7 +25,9 @@ You can run RSFuzz and baseline fuzzers with the following commands in the 'root
 # Run RSFuzz
 $ python3 runRSFuzz.py --benchmark Gson --basefuzzer random
 # Run baselines
-$ python3 runRSFuzz.py --baseline-only --benchmark Gson --basefuzzer random 
+$ python3 runRSFuzz.py --baseline-only --benchmark Gson --basefuzzer random
+# Run fuzzer with recurrent sequences
+$ python3 runRSFuzz.py --benchmark Gson --basefuzzer random --prepared-RS {path/to/recurrent-sequence}
 ```
 
 The results will be saved in the `{result_dir}/{benchmark}/captured_data` dicrectory. RSFuzz generates 4 main outputs:
@@ -67,9 +69,7 @@ For more details about arguments, you can use `--help` commands:
 $python3 main_rsfuzz.py --help
 usage: main_rsfuzz.py [options]
 
-Options for RSFuzz
-
-options:
+Options:
   -h, --help            show this help message and exit
   --benchmark=BENCHMARK
                         Available benchmark: JerryScript, Jsish, QuickJS,
@@ -78,13 +78,22 @@ options:
   --basefuzzer=BASEFUZZER
                         Base Fuzzer : [random, pcfg, tribble]
   --baseline-only       Run baseline fuzzer without RSFuzz
+  --prepared-RS=PREPARED_RS
+                        Run fuzzer with prepared recurrent sequence
   --capture_time=CAPTURE_TIME
-                        Recurrent sequence generation time(sec) (Default: 43200 = 12h)
+                        Recurrent sequence generation time(sec) (Default:
+                        43200 = 12h)
   --test_time=TEST_TIME
                         Base fuzzer testing time(sec) (Default: 43200 = 12h)
   --result_dir=RESULT_DIR
-                        Result directory (Default: results/{benchmark})
-  --n_num=N_NUM         Hyperparameter to hanlde n of input generation in a iteration (Default: 2000)
+                        Result directory (Default:
+                        results/{basefuzzer}-{benchmark})
+  --n_num=N_NUM         Hyperparameter to hanlde n of input generation in a
+                        iteration (Default: 2000)
+  --test_dir=TEST_DIR   Directory to capture coverage data (Required to test
+                        JerryScript, Jsish, or QuickJS)
+  --test_pgm=TEST_PGM   Program to run (Required to test JerryScript, Jsish,
+                        or QuickJS)
 ```
 
 ## Bug-finding results
