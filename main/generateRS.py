@@ -610,7 +610,7 @@ def update_recurrent_sequences(info_num, recurrent_sequences, parameter_dict, up
     with open(f"{capture_dir}/other_info/{info_num}_seqlist_size.pickle", 'wb') as f:
         pickle.dump(sequence_list_size_dict, f)
 
-    logs = f"{time.time()-start_time}\tCapture top {len(clusters_to_update)} / {len(result)} Clusters\n"
+    logs = f"# {time.time()-start_time}\tCapture top {len(clusters_to_update)} / {len(result)} Clusters\n"
     with open(capture_dir + "/logs.txt", "a") as f:
         f.write(logs)
            
@@ -698,7 +698,7 @@ def run(rule_dict, depths_dict, number_individuals):
     os.system(f'mkdir "{testcase_dir}"')
     total_ninputs += generate_input_files(testcase_dir, ({}, {}, {}), rule_dict, depths_dict, n_iter)
     before_cov_vec = test_input_files(0, start_time, n_iter)
-    logs = f"Generate Redundant Sequences\n"
+    logs = f"# Generate Redundant Sequences\n"
     logs += f"{time.time()-start_time}\tIter-{info_num}\t{before_cov_vec.sum()}\t{total_ninputs}\n"
     with open(capture_dir + "/logs.txt", "a") as f:
         f.write(logs)
