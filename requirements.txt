@@ -1,0 +1,10 @@
+# Python dependencies for optional native execution (non-Docker)
+
+numpy==2.2.3
+scikit-learn==1.6.1
+exrex==0.12.0
+
+# Note:
+# Additional system dependencies (e.g., cmake, bison, OpenJDK)
+# are installed via the provided Dockerfile.
+# Please refer to the Dockerfile for the full environment setup.
