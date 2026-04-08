@@ -1,0 +1,4 @@
+We apply for the three badges: Available, Reusable, and Functional badges.
+- The DOI link is as: https://doi.org/10.5281/zenodo.11091402. Our artifact is available on the public git repository. 
+- We include all 12 benchmarks used in our evaluation, along with scripts to reproduce the experimental results reported in the paper.
+- We provide a DevContainer with all required dependencies pre-installed, enabling other researchers to easily use and extend our tool.
