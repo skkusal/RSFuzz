@@ -210,9 +210,9 @@ def run(rule_dict, depths_dict, subject):
         total_cov |= tmp_cov
 
     if recurrent_sequences == ({},{},{}):
-        logs = "Run Baseline\n"
+        logs = "# Run Baseline\n"
     else:
-        logs = "Run Base Fuzzer with Redundant Sequences\n"
+        logs = "# Run Base Fuzzer with Redundant Sequences\n"
     logs += f"{time.time()-start_time}\tIter-{info_num}\t{total_cov.sum()}\t{total_ninputs}\n"
     with open(capture_dir + "/logs.txt", "a") as f:
         f.write(logs)
@@ -224,8 +224,10 @@ def run(rule_dict, depths_dict, subject):
         os.system(f'rm -rf "{testcase_dir}"')
         os.system(f'mkdir "{testcase_dir}"')
 
-        total_ninputs += generate_input_files(testcase_dir, recurrent_sequences, rule_dict, depths_dict)            
-        total_cov |= test_input_files(info_num)
+        total_ninputs += generate_input_files(testcase_dir, recurrent_sequences, rule_dict, depths_dict)
+        tmp_total_cov = test_input_files(info_num)
+        if len(tmp_total_cov) != 0:
+            total_cov |= tmp_total_cov
 
         logs = f"{time.time()-start_time}\tIter-{info_num}\t{total_cov.sum()}\t{total_ninputs}\n"
         with open(capture_dir + "/logs.txt", "a") as f:
