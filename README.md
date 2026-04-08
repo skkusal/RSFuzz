@@ -23,11 +23,11 @@ You can run RSFuzz and baseline fuzzers with the following commands in the 'root
 ```bash
 # At rsfuzz/main
 # Run RSFuzz
-$ python3 runRSFuzz.py --benchmark Gson --basefuzzer random
-# Run baselines
-$ python3 runRSFuzz.py --baseline-only --benchmark Gson --basefuzzer random
+$ python3 runRSFuzz.py --benchmark Gson --basefuzzer random --result_dir rsfuzz-result
+# run baseline fuzzers 
+$ python3 runRSFuzz.py --baseline-only --benchmark Gson --basefuzzer random --result_dir baseline-result
 # Run fuzzer with recurrent sequences
-$ python3 runRSFuzz.py --benchmark Gson --basefuzzer random --prepared-RS {path/to/recurrent-sequence}
+$ python3 runRSFuzz.py --benchmark Gson --basefuzzer random --prepared-RS {path/to/recurrent-sequence} --result_dir prepared-result
 ```
 
 The results will be saved in the `{result_dir}/{benchmark}/captured_data` dicrectory. RSFuzz generates 4 main outputs:
