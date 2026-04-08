@@ -22,6 +22,9 @@ def run_rsfuzz_online(opt):
         os.system("rm -rf " + os.path.join(opt.result_dir, "test_data"))
     os.mkdir(os.path.join(opt.result_dir, "test_data"))
 
+    with open(f"{os.path.join(opt.result_dir, 'capture_data')}/logs.txt", 'a') as f:
+        f.write(f"Time\t# Iter\tCoverage\t# Inputs\n")
+
     if opt.benchmark in ["JerryScript", "Jsish", "QuickJS"] and (
         opt.test_dir is None or opt.test_pgm is None
     ):
@@ -45,12 +48,21 @@ def run_rsfuzz_online(opt):
         file_extension = "js"
 
     if opt.baseline_only:
+        print(f"Run Baseline Fuzzer : {opt.basefuzzer}")
         subprocess.call(
             f"timeout {str(opt.test_time + opt.capture_time)} python3 runFuzzer.py --benchmark {opt.benchmark} --fileExtension {file_extension} --basefuzzer {opt.basefuzzer} --capture_dir {os.path.join(opt.result_dir, 'capture_data')} --testcase_dir {os.path.join(opt.result_dir, 'test_data')} --n_num {str(opt.n_num)} --test_dir {opt.test_dir} --test_pgm {test_pgm}",
             shell=True,
             stderr=subprocess.STDOUT,
-        )        
+        )
+    elif opt.prepared_rs:
+        print(f"Run with Prepared RS : {opt.prepared_rs}")
+        subprocess.call(
+            f"timeout {str(opt.test_time + opt.capture_time)} python3 runFuzzer.py --benchmark {opt.benchmark} --fileExtension {file_extension} --basefuzzer {opt.basefuzzer} --capture_dir {os.path.join(opt.result_dir, 'capture_data')} --testcase_dir {os.path.join(opt.result_dir, 'test_data')} --n_num {10000} --test_dir {opt.test_dir} --test_pgm {test_pgm} --recurrent_sequences {opt.prepared_rs}",
+            shell=True,
+            stderr=subprocess.STDOUT,
+        )                
     else:
+        print(f"Generate Recurrent Sequence with Base Fuzzer : {opt.basefuzzer}")
         start_time = time.time()
         subprocess.call(
             f"timeout {str(opt.capture_time)} python3 generateRS.py --benchmark {opt.benchmark} --fileExtension {file_extension} --basefuzzer {opt.basefuzzer} --capture_dir {os.path.join(opt.result_dir, 'capture_data')} --testcase_dir {os.path.join(opt.result_dir, 'test_data')} --n_num {str(opt.n_num)} --test_dir {opt.test_dir} --test_pgm {test_pgm}",
@@ -59,7 +71,7 @@ def run_rsfuzz_online(opt):
         )
         recurrent_sequences = os.path.abspath(os.path.join(opt.result_dir, "capture_data","recurrent_sequences.pickle"))
         print("Capture finished")
-
+        print(f"Run with Generated RS with Base Fuzzer : {opt.basefuzzer}")
         subprocess.call(
             f"timeout {str(opt.test_time)} python3 runFuzzer.py --benchmark {opt.benchmark} --fileExtension {file_extension} --basefuzzer {opt.basefuzzer} --capture_dir {os.path.join(opt.result_dir, 'capture_data')} --testcase_dir {os.path.join(opt.result_dir, 'test_data')} --n_num {10000} --test_dir {opt.test_dir} --test_pgm {test_pgm} --recurrent_sequences {recurrent_sequences}",
             shell=True,
@@ -74,10 +86,11 @@ if __name__ == "__main__":
     parser.add_option("--benchmark", dest="benchmark", help="Available benchmark: JerryScript, Jsish, QuickJS, Rhino, Argo, Genson, Gson, JsonToJava, jackson-dataformat-csv, super-csv, commonmark, txtmark",)
     parser.add_option("--basefuzzer", dest="basefuzzer", help="Base Fuzzer : [random, pcfg, tribble]",)
     parser.add_option("--baseline-only", dest="baseline_only", action="store_true", default=False, help="Run baseline fuzzer without RSFuzz")
+    parser.add_option("--prepared-RS", dest="prepared_rs", default="", help="Run fuzzer with prepared recurrent sequence")
     parser.add_option("--capture_time", dest="capture_time", type="int", default=43200, help="Recurrent sequence generation time(sec) (Default: 43200 = 12h)",)
     parser.add_option("--test_time", dest="test_time", type="int", default=43200, help="Base fuzzer testing time(sec) (Default: 43200 = 12h)",)
     # parser.add_option("--recurrent_sequences", dest="recurrent_sequences", help="Pruning list for test")
-    parser.add_option("--result_dir", dest="result_dir", default="results", help="Result directory (Default: results/{benchmark})",)
+    parser.add_option("--result_dir", dest="result_dir", default="results", help="Result directory (Default: results/{basefuzzer}-{benchmark})",)
     parser.add_option("--n_num", dest="n_num", type="int", default=3000, help="Hyperparameter to hanlde n of input generation in a iteration (Default: 2000)",)
     parser.add_option("--test_dir", dest="test_dir", help="Directory to capture coverage data (Required to test JerryScript, Jsish, or QuickJS)",)
     parser.add_option("--test_pgm", dest="test_pgm", help="Program to run (Required to test JerryScript, Jsish, or QuickJS)",)
@@ -87,6 +100,11 @@ if __name__ == "__main__":
     if options.benchmark is None:
         print("Please input benchmark name")
         exit(1)
+
+    if options.prepared_rs:
+        if not os.path.exists(options.prepared_rs):
+            print(f"Prepared Recurrent Sequence : {prepared_rs} is not exist")
+            exit(1)
 
     if options.benchmark == "QuickJS":
         options.test_pgm = f"{benchmark_dir}/quickjs/qjs"
@@ -100,9 +118,9 @@ if __name__ == "__main__":
     else:
         options.test_pgm = "java"
     
-    options.result_dir += "/" + options.benchmark
+    options.result_dir += "/" + f"{options.basefuzzer}-{options.benchmark}"
 
-    print(options.test_pgm)
-    print(options.test_dir)
+    # print(options.test_pgm)
+    # print(options.test_dir)
 
     recurrent_sequences = run_rsfuzz_online(options)
