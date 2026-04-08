@@ -12,7 +12,7 @@ RUN echo "ulimit -s unlimited" >> /root/.bashrc
 
 # Clone rsfuzz repository
 WORKDIR /root/
-RUN git clone https://github.com/anonymrsfuzz/rsfuzz.git
+RUN git clone https://github.com/skkusal/rsfuzz.git
 WORKDIR /root/rsfuzz
 
 RUN bash build-benchmarks.sh
