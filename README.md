@@ -83,8 +83,8 @@ $ python3 runRatio.py --benchmark Gson --basefuzzer random --recurrent_sequence 
 For more details about arguments, you can use `--help` commands:
 
 ```bash
-$python3 run_RSFuzz.py --help
-usage: run_RSFuzz.py [options]
+$python3 runRSFuzz.py --help
+usage: runRSFuzz.py [options]
 
 Options:
   -h, --help            show this help message and exit
