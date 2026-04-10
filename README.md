@@ -17,18 +17,31 @@ In the docker image, all 12 benchmarks we used are installed in 'root/rsfuzz/ben
 ![benchmark_table](./Benchmarks.png)
 
 ## How to run RSFuzz
-
 You can run RSFuzz and baseline fuzzers with the following commands in the 'root/rsfuzz/main' directory. There are two required arguments:`benchmark` (target program) and `base_fuzzer` (`random`, `prob`, or `tribble`).
 
+#### Quick Test (1-hour)
+
+We provide an example recurrent sequence for quick evaluation. Run the following commands:
 ```bash
-# At rsfuzz/main
-# Run RSFuzz
-$ python3 runRSFuzz.py --benchmark Gson --basefuzzer random --result_dir rsfuzz-result
-# run baseline fuzzers 
-$ python3 runRSFuzz.py --baseline-only --benchmark Gson --basefuzzer random --result_dir baseline-result
-# Run fuzzer with recurrent sequences
-$ python3 runRSFuzz.py --benchmark Gson --basefuzzer random --prepared-RS {path/to/recurrent-sequence} --result_dir prepared-result
+# Quick test at rsfuzz/main
+# Run the random fuzzer for 1 hour using the provided recurrent sequence
+$ python3 runRSFuzz.py --benchmark Rhino --basefuzzer random --capture_time 0 --test_time 3600 --prepared-RS /root/rsfuzz/main/rhino-RS-example.pickle --result_dir RS_result
+# Run the random fuzzer for 1 hour with out reccurent sequence
+$ python3 runRSFuzz.py --baseline-only --benchmark Rhino --basefuzzer random --capture_time 0 --test_time 3600 --result_dir baseline_result
 ```
+
+#### Full Experiment (24-hour)
+
+To reproduce the full experiment reported in the paper:
+```bash
+# Full experiment at rsfuzz/main
+# Run RSFuzz : Generate recurrent sequence and fuzz with it
+$ python3 runRSFuzz.py --benchmark Rhino --basefuzzer random --result_dir rsfuzz-result
+# run baseline fuzzers : fuzz with base fuzzer alone
+$ python3 runRSFuzz.py --baseline-only --benchmark Rhino --basefuzzer random --result_dir baseline-result
+```
+
+#### Output Files
 
 The results will be saved in the `{result_dir}/{benchmark}/captured_data` dicrectory. RSFuzz generates 4 main outputs:
 1. Recurrent sequences : `recurrent_sequence.pickle` file
@@ -101,10 +114,10 @@ Options:
 Since coverage results are stored in output files, we only provide a Python file, `errorCheck.py`, to check bug-finding results. There are two required arguments: `benchmark` (target program) and `inputs_dir` (e.g., `*/capture_data/error`).
 ```bash
 # At rsfuzz/main
-$ python3 errorCheck.py --benchmark Gson --inputs_dir results/argo/captured_data/error
+$ python3 errorCheck.py --benchmark Rhino --inputs_dir ${path-to-error/*}
 Exception Type                                    N uniques
-java.lang.ClassCastException                      3
-java.lang.IllegalArgumentException                10
-Detail reports : rsfuzz_results/random/argo/captured_data/error/bug-result.txt
+java.lang.NullPointerException                    1
+java.lang.IllegalArgumentException                3
+Detail reports : rsfuzz_results/random/Rhino/captured_data/error/bug-result.txt
 ```
 You can check more details (stack traces) in the `{inputs_dir}/bug-result.txt` file.
